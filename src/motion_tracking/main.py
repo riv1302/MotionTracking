@@ -20,6 +20,8 @@ def main() -> None:
                 if not ret:
                     break
 
+                frame = cv2.flip(frame, 1)
+
                 frame = tracker.process_frame(frame)
                 frame = draw_mode_overlay(frame, tracker.mode)
 
