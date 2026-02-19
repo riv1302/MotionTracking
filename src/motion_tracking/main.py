@@ -1,5 +1,39 @@
+import cv2
+
+from motion_tracking.camera import TrackingMode, draw_mode_overlay, process_frame
+
+WINDOW_NAME = "Motion Tracking"
+QUIT_KEYS = {ord("q"), 27}
+
+
 def main() -> None:
-    pass
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        raise RuntimeError("Could not open webcam (device 0)")
+
+    mode = TrackingMode.POSE
+
+    try:
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            frame = process_frame(frame, mode)
+            frame = draw_mode_overlay(frame, mode)
+
+            cv2.imshow(WINDOW_NAME, frame)
+
+            key = cv2.waitKey(1) & 0xFF
+            if key in QUIT_KEYS:
+                break
+
+            new_mode = TrackingMode.from_key(key)
+            if new_mode is not None:
+                mode = new_mode
+    finally:
+        cap.release()
+        cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":
