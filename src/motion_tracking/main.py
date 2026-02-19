@@ -13,6 +13,8 @@ def main() -> None:
 
     mode = TrackingMode.POSE
 
+    cv2.namedWindow(WINDOW_NAME)
+
     try:
         while True:
             ret, frame = cap.read()
@@ -26,6 +28,9 @@ def main() -> None:
 
             key = cv2.waitKey(1) & 0xFF
             if key in QUIT_KEYS:
+                break
+
+            if cv2.getWindowProperty(WINDOW_NAME, cv2.WND_PROP_VISIBLE) < 1:
                 break
 
             new_mode = TrackingMode.from_key(key)
