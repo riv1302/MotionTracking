@@ -13,7 +13,7 @@ def main() -> None:
 
     mode = TrackingMode.POSE
 
-    cv2.namedWindow(WINDOW_NAME)
+    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
 
     try:
         while True:
