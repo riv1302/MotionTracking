@@ -102,9 +102,9 @@ def _draw_landmarks(
     landmarks: list,
     connections: frozenset[tuple[int, int]] | None = None,
     point_color: tuple = (0, 255, 0),
-    line_color: tuple = (255, 255, 255),
-    point_radius: int = 4,
-    line_thickness: int = 2,
+    line_color: tuple = (0, 200, 0),
+    point_radius: int = 2,
+    line_thickness: int = 1
 ) -> None:
     h, w = frame.shape[:2]
     if connections:
@@ -120,7 +120,34 @@ def _draw_landmarks(
                     line_thickness,
                 )
     for lm in landmarks:
-        cv2.circle(frame, (int(lm.x * w), int(lm.y * h)), point_radius, point_color, -1)
+        cx, cy = int(lm.x * w), int(lm.y * h)
+        cv2.circle(frame, (cx, cy), point_radius, point_color, -1)
+
+
+def _draw_neural_links(
+    frame: np.ndarray,
+    landmarks: list,
+    n_neighbors: int = 3,
+    color: tuple = (0, 200, 0),
+    thickness: int = 1,
+) -> None:
+    h, w = frame.shape[:2]
+    coords = np.array([[lm.x * w, lm.y * h] for lm in landmarks])  # (N, 2)
+
+    diff = coords[:, np.newaxis, :] - coords[np.newaxis, :, :]  # (N, N, 2)
+    sq_dist = (diff ** 2).sum(axis=2)                           # (N, N)
+    np.fill_diagonal(sq_dist, np.inf)
+    nearest = np.argsort(sq_dist, axis=1)[:, :n_neighbors]      # (N, n_neighbors)
+
+    for i, neighbors in enumerate(nearest):
+        for j in neighbors:
+            cv2.line(
+                frame,
+                (int(coords[i, 0]), int(coords[i, 1])),
+                (int(coords[j, 0]), int(coords[j, 1])),
+                color,
+                thickness,
+            )
 
 
 # ── Motion tracker ────────────────────────────────────────────────────────────
@@ -148,6 +175,7 @@ class MotionTracker:
                 min_pose_detection_confidence=0.5,
                 min_pose_presence_confidence=0.5,
                 min_tracking_confidence=0.5,
+                output_segmentation_masks=True,
             )
             self._detector = mp_vision.PoseLandmarker.create_from_options(options)
         elif self._mode == TrackingMode.HANDS:
@@ -187,6 +215,13 @@ class MotionTracker:
 
         if self._mode == TrackingMode.POSE:
             result = self._detector.detect_for_video(mp_image, timestamp_ms)
+            if result.segmentation_masks:
+                mask = np.squeeze(result.segmentation_masks[0].numpy_view())  # float32 (H, W)
+                h, w = frame.shape[:2]
+                if mask.shape[:2] != (h, w):
+                    mask = cv2.resize(mask, (w, h))
+                darken = (0.2 + 0.8 * mask)[:, :, np.newaxis]
+                frame[:] = np.clip(frame * darken, 0, 255).astype(np.uint8)
             for pose_landmarks in result.pose_landmarks:
                 _draw_landmarks(frame, pose_landmarks, _POSE_CONNECTIONS)
         elif self._mode == TrackingMode.HANDS:
@@ -196,6 +231,7 @@ class MotionTracker:
         elif self._mode == TrackingMode.FACE_MESH:
             result = self._detector.detect_for_video(mp_image, timestamp_ms)
             for face_landmarks in result.face_landmarks:
+                _draw_neural_links(frame, face_landmarks, n_neighbors=3)
                 _draw_landmarks(frame, face_landmarks, point_radius=1)
 
         return frame

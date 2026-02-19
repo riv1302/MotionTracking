@@ -73,6 +73,7 @@ class TestMotionTracker:
             mock_result.pose_landmarks = []
             mock_result.hand_landmarks = []
             mock_result.face_landmarks = []
+            mock_result.segmentation_masks = []
             detector_mock = MagicMock()
             detector_mock.detect_for_video.return_value = mock_result
             mock_vision.PoseLandmarker.create_from_options.return_value = detector_mock
