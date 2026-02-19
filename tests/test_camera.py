@@ -1,6 +1,13 @@
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 
-from motion_tracking.camera import TrackingMode, draw_mode_overlay, process_frame
+from motion_tracking.camera import MotionTracker, TrackingMode, draw_mode_overlay
+
+
+def _blank_frame() -> np.ndarray:
+    return np.zeros((480, 640, 3), dtype=np.uint8)
 
 
 class TestTrackingMode:
@@ -34,22 +41,74 @@ class TestTrackingMode:
             assert len(mode.display_name) > 0
 
 
-def _blank_frame() -> np.ndarray:
-    return np.zeros((480, 640, 3), dtype=np.uint8)
+# Patch order (bottom = first arg after self):
+#   mock_mp         → motion_tracking.camera.mp
+#   mock_vision     → motion_tracking.camera.mp_vision
+#   mock_python     → motion_tracking.camera.mp_python
+#   mock_ensure     → motion_tracking.camera._ensure_model
+@patch("motion_tracking.camera._ensure_model", return_value=Path("/fake/model.task"))
+@patch("motion_tracking.camera.mp_python")
+@patch("motion_tracking.camera.mp_vision")
+@patch("motion_tracking.camera.mp")
+class TestMotionTracker:
+    def test_init_creates_pose_detector(self, mock_mp, mock_vision, mock_python, mock_ensure):
+        MotionTracker(TrackingMode.POSE)
+        mock_vision.PoseLandmarker.create_from_options.assert_called_once()
 
+    def test_init_creates_hands_detector(self, mock_mp, mock_vision, mock_python, mock_ensure):
+        MotionTracker(TrackingMode.HANDS)
+        mock_vision.HandLandmarker.create_from_options.assert_called_once()
 
-class TestProcessFrame:
-    def test_returns_ndarray_for_each_mode(self):
-        frame = _blank_frame()
+    def test_init_creates_face_mesh_detector(self, mock_mp, mock_vision, mock_python, mock_ensure):
+        MotionTracker(TrackingMode.FACE_MESH)
+        mock_vision.FaceLandmarker.create_from_options.assert_called_once()
+
+    def test_mode_property_returns_current_mode(self, mock_mp, mock_vision, mock_python, mock_ensure):
+        tracker = MotionTracker(TrackingMode.POSE)
+        assert tracker.mode == TrackingMode.POSE
+
+    def test_process_frame_returns_ndarray_same_shape(self, mock_mp, mock_vision, mock_python, mock_ensure):
         for mode in TrackingMode:
-            result = process_frame(frame, mode)
+            mock_result = MagicMock()
+            mock_result.pose_landmarks = []
+            mock_result.hand_landmarks = []
+            mock_result.face_landmarks = []
+            detector_mock = MagicMock()
+            detector_mock.detect_for_video.return_value = mock_result
+            mock_vision.PoseLandmarker.create_from_options.return_value = detector_mock
+            mock_vision.HandLandmarker.create_from_options.return_value = detector_mock
+            mock_vision.FaceLandmarker.create_from_options.return_value = detector_mock
+
+            frame = _blank_frame()
+            tracker = MotionTracker(mode)
+            result = tracker.process_frame(frame)
+
             assert isinstance(result, np.ndarray)
-
-    def test_output_shape_preserved(self):
-        frame = _blank_frame()
-        for mode in TrackingMode:
-            result = process_frame(frame, mode)
             assert result.shape == frame.shape
+
+    def test_set_mode_closes_old_detector(self, mock_mp, mock_vision, mock_python, mock_ensure):
+        tracker = MotionTracker(TrackingMode.POSE)
+        old_detector = mock_vision.PoseLandmarker.create_from_options.return_value
+
+        tracker.set_mode(TrackingMode.HANDS)
+
+        old_detector.close.assert_called_once()
+        mock_vision.HandLandmarker.create_from_options.assert_called_once()
+
+    def test_set_mode_noop_if_same_mode(self, mock_mp, mock_vision, mock_python, mock_ensure):
+        tracker = MotionTracker(TrackingMode.POSE)
+        old_detector = mock_vision.PoseLandmarker.create_from_options.return_value
+
+        tracker.set_mode(TrackingMode.POSE)
+
+        old_detector.close.assert_not_called()
+        mock_vision.PoseLandmarker.create_from_options.assert_called_once()
+
+    def test_context_manager_closes_detector(self, mock_mp, mock_vision, mock_python, mock_ensure):
+        with MotionTracker(TrackingMode.POSE):
+            detector = mock_vision.PoseLandmarker.create_from_options.return_value
+
+        detector.close.assert_called_once()
 
 
 class TestDrawModeOverlay:

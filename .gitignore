@@ -20,3 +20,6 @@ venv/
 
 # OS
 .DS_Store
+
+# MediaPipe models
+models/*.task
