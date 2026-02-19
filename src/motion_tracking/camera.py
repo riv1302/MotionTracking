@@ -216,7 +216,7 @@ class MotionTracker:
         if self._mode == TrackingMode.POSE:
             result = self._detector.detect_for_video(mp_image, timestamp_ms)
             if result.segmentation_masks:
-                mask = np.squeeze(result.segmentation_masks[0].numpy_view())  # float32 (H, W)
+                mask = np.squeeze(result.segmentation_masks[0].numpy_view())
                 h, w = frame.shape[:2]
                 if mask.shape[:2] != (h, w):
                     mask = cv2.resize(mask, (w, h))

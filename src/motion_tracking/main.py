@@ -14,7 +14,7 @@ def main() -> None:
     cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
 
     try:
-        with MotionTracker(TrackingMode.POSE) as tracker:
+        with MotionTracker(TrackingMode.FACE_MESH) as tracker:
             while True:
                 ret, frame = cap.read()
                 if not ret:

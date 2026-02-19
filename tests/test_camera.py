@@ -51,23 +51,33 @@ class TestTrackingMode:
 @patch("motion_tracking.camera.mp_vision")
 @patch("motion_tracking.camera.mp")
 class TestMotionTracker:
-    def test_init_creates_pose_detector(self, mock_mp, mock_vision, mock_python, mock_ensure):
+    def test_init_creates_pose_detector(
+        self, mock_mp, mock_vision, mock_python, mock_ensure
+    ):
         MotionTracker(TrackingMode.POSE)
         mock_vision.PoseLandmarker.create_from_options.assert_called_once()
 
-    def test_init_creates_hands_detector(self, mock_mp, mock_vision, mock_python, mock_ensure):
+    def test_init_creates_hands_detector(
+        self, mock_mp, mock_vision, mock_python, mock_ensure
+    ):
         MotionTracker(TrackingMode.HANDS)
         mock_vision.HandLandmarker.create_from_options.assert_called_once()
 
-    def test_init_creates_face_mesh_detector(self, mock_mp, mock_vision, mock_python, mock_ensure):
+    def test_init_creates_face_mesh_detector(
+        self, mock_mp, mock_vision, mock_python, mock_ensure
+    ):
         MotionTracker(TrackingMode.FACE_MESH)
         mock_vision.FaceLandmarker.create_from_options.assert_called_once()
 
-    def test_mode_property_returns_current_mode(self, mock_mp, mock_vision, mock_python, mock_ensure):
+    def test_mode_property_returns_current_mode(
+        self, mock_mp, mock_vision, mock_python, mock_ensure
+    ):
         tracker = MotionTracker(TrackingMode.POSE)
         assert tracker.mode == TrackingMode.POSE
 
-    def test_process_frame_returns_ndarray_same_shape(self, mock_mp, mock_vision, mock_python, mock_ensure):
+    def test_process_frame_returns_ndarray_same_shape(
+        self, mock_mp, mock_vision, mock_python, mock_ensure
+    ):
         for mode in TrackingMode:
             mock_result = MagicMock()
             mock_result.pose_landmarks = []
@@ -87,7 +97,9 @@ class TestMotionTracker:
             assert isinstance(result, np.ndarray)
             assert result.shape == frame.shape
 
-    def test_set_mode_closes_old_detector(self, mock_mp, mock_vision, mock_python, mock_ensure):
+    def test_set_mode_closes_old_detector(
+        self, mock_mp, mock_vision, mock_python, mock_ensure
+    ):
         tracker = MotionTracker(TrackingMode.POSE)
         old_detector = mock_vision.PoseLandmarker.create_from_options.return_value
 
@@ -96,7 +108,9 @@ class TestMotionTracker:
         old_detector.close.assert_called_once()
         mock_vision.HandLandmarker.create_from_options.assert_called_once()
 
-    def test_set_mode_noop_if_same_mode(self, mock_mp, mock_vision, mock_python, mock_ensure):
+    def test_set_mode_noop_if_same_mode(
+        self, mock_mp, mock_vision, mock_python, mock_ensure
+    ):
         tracker = MotionTracker(TrackingMode.POSE)
         old_detector = mock_vision.PoseLandmarker.create_from_options.return_value
 
@@ -105,7 +119,9 @@ class TestMotionTracker:
         old_detector.close.assert_not_called()
         mock_vision.PoseLandmarker.create_from_options.assert_called_once()
 
-    def test_context_manager_closes_detector(self, mock_mp, mock_vision, mock_python, mock_ensure):
+    def test_context_manager_closes_detector(
+        self, mock_mp, mock_vision, mock_python, mock_ensure
+    ):
         with MotionTracker(TrackingMode.POSE):
             detector = mock_vision.PoseLandmarker.create_from_options.return_value
 
