@@ -3,7 +3,12 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 
-from motion_tracking.camera import MotionTracker, TrackingMode, draw_mode_overlay
+from motion_tracking.camera import (
+    SIDEBAR_WIDTH,
+    MotionTracker,
+    TrackingMode,
+    build_sidebar,
+)
 
 
 def _blank_frame() -> np.ndarray:
@@ -128,18 +133,20 @@ class TestMotionTracker:
         detector.close.assert_called_once()
 
 
-class TestDrawModeOverlay:
-    def test_returns_ndarray(self):
-        frame = _blank_frame()
-        result = draw_mode_overlay(frame, TrackingMode.POSE)
-        assert isinstance(result, np.ndarray)
+class TestBuildSidebar:
+    def test_returns_correct_shape(self):
+        panel = build_sidebar(480, TrackingMode.POSE)
+        assert panel.shape == (480, SIDEBAR_WIDTH, 3)
 
-    def test_output_shape_preserved(self):
-        frame = _blank_frame()
-        result = draw_mode_overlay(frame, TrackingMode.POSE)
-        assert result.shape == frame.shape
+    def test_shape_matches_requested_height(self):
+        panel = build_sidebar(720, TrackingMode.HANDS)
+        assert panel.shape[0] == 720
 
-    def test_overlay_modifies_frame(self):
-        frame = _blank_frame()
-        draw_mode_overlay(frame, TrackingMode.POSE)
-        assert frame.max() > 0
+    def test_panel_has_content(self):
+        panel = build_sidebar(480, TrackingMode.POSE)
+        assert panel.max() > 0
+
+    def test_all_modes_renderable(self):
+        for mode in TrackingMode:
+            panel = build_sidebar(480, mode)
+            assert isinstance(panel, np.ndarray)

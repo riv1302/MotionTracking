@@ -1,6 +1,7 @@
 import cv2
+import numpy as np
 
-from motion_tracking.camera import MotionTracker, TrackingMode, draw_mode_overlay
+from motion_tracking.camera import MotionTracker, TrackingMode, build_sidebar
 
 WINDOW_NAME = "Motion Tracking"
 QUIT_KEYS = {ord("q"), 27}
@@ -23,9 +24,8 @@ def main() -> None:
                 frame = cv2.flip(frame, 1)
 
                 frame = tracker.process_frame(frame)
-                frame = draw_mode_overlay(frame, tracker.mode)
-
-                cv2.imshow(WINDOW_NAME, frame)
+                sidebar = build_sidebar(frame.shape[0], tracker.mode)
+                cv2.imshow(WINDOW_NAME, np.hstack([sidebar, frame]))
 
                 key = cv2.waitKey(1) & 0xFF
                 if key in QUIT_KEYS:
