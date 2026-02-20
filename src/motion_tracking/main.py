@@ -1,7 +1,9 @@
 import cv2
 import numpy as np
 
-from motion_tracking.camera import MotionTracker, TrackingMode, build_sidebar
+from motion_tracking.modes import TrackingMode
+from motion_tracking.sidebar import build_sidebar
+from motion_tracking.tracker import MotionTracker
 
 WINDOW_NAME = "Motion Tracking"
 QUIT_KEYS = {ord("q"), 27}

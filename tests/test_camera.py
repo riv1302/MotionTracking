@@ -3,12 +3,9 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 
-from motion_tracking.camera import (
-    SIDEBAR_WIDTH,
-    MotionTracker,
-    TrackingMode,
-    build_sidebar,
-)
+from motion_tracking.modes import TrackingMode
+from motion_tracking.sidebar import SIDEBAR_WIDTH, build_sidebar
+from motion_tracking.tracker import MotionTracker
 
 
 def _blank_frame() -> np.ndarray:
@@ -47,14 +44,14 @@ class TestTrackingMode:
 
 
 # Patch order (bottom = first arg after self):
-#   mock_mp         → motion_tracking.camera.mp
-#   mock_vision     → motion_tracking.camera.mp_vision
-#   mock_python     → motion_tracking.camera.mp_python
-#   mock_ensure     → motion_tracking.camera._ensure_model
-@patch("motion_tracking.camera._ensure_model", return_value=Path("/fake/model.task"))
-@patch("motion_tracking.camera.mp_python")
-@patch("motion_tracking.camera.mp_vision")
-@patch("motion_tracking.camera.mp")
+#   mock_mp         → motion_tracking.tracker.mp
+#   mock_vision     → motion_tracking.tracker.mp_vision
+#   mock_python     → motion_tracking.tracker.mp_python
+#   mock_ensure     → motion_tracking.tracker._ensure_model
+@patch("motion_tracking.tracker._ensure_model", return_value=Path("/fake/model.task"))
+@patch("motion_tracking.tracker.mp_python")
+@patch("motion_tracking.tracker.mp_vision")
+@patch("motion_tracking.tracker.mp")
 class TestMotionTracker:
     def test_init_creates_pose_detector(
         self, mock_mp, mock_vision, mock_python, mock_ensure
