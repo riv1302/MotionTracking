@@ -54,17 +54,17 @@ def _draw_controls_section(panel: np.ndarray, y_start: int) -> None:
     for i, (key, action) in enumerate(controls):
         y = y_start + 20 + i * 22
         _put(panel, key, y, _C_DIM)
-        _put(panel, action, y, _C_DIM, scale=0.38)
+        _put(panel, f"               <- {action}", y, _C_DIM, scale=0.38)
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
 def build_sidebar(height: int, mode: TrackingMode) -> np.ndarray:
     panel = np.zeros((height, SIDEBAR_WIDTH, 3), dtype=np.uint8)
-    mode_section_y = 55
     sep1_y = 50
+    mode_section_y = sep1_y + 15
     sep2_y = mode_section_y + 20 + len(TrackingMode) * 26 + 8
-    controls_y = sep2_y + 14
+    controls_y = sep2_y + 15
 
     _draw_title(panel)
     _draw_separator(panel, sep1_y)
