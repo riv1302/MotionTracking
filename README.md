@@ -1,6 +1,7 @@
 # MotionTracking
 
-Real-time motion tracking with a hacker/Matrix aesthetic. Uses MediaPipe and OpenCV to detect body pose, hands, and face landmarks from a webcam and renders them as green neon overlays on the live feed.
+Real-time motion tracking with a hacker/Matrix aesthetic. Uses MediaPipe and OpenCV to detect body pose, hands, and face landmarks from a webcam and renders them as overlays on the live feed.
+<img width="630" height="420" alt="{EE9E4A4B-A165-41C7-BDB7-4F4040FEAF44}" src="https://github.com/user-attachments/assets/bcd8cb1a-ac07-461d-a0f6-33a078532ee3" /> <img width="610" height="490" alt="{3C5317AA-9F71-4493-AB8C-CA5852012BC7}" src="https://github.com/user-attachments/assets/9c174c7c-3b28-42a5-bf39-077741917378" />
 
 ## Features
 
